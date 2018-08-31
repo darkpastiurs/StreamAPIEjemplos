@@ -10,6 +10,7 @@ public class Main {
         JFrame frm = new JFrame("Estudiantes de la Botellita de Jerez");
         frm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frm.setContentPane(new FrmStreamEjemplo().pnlRoot);
+        frm.setResizable(false);
         frm.pack();
         frm.setLocationRelativeTo(null);
         frm.setVisible(true);

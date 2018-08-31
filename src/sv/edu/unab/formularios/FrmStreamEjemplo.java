@@ -4,28 +4,26 @@ import sv.edu.unab.dominio.Estudiante;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.MaskFormatter;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.StringJoiner;
-import java.util.logging.SimpleFormatter;
 
-public class FrmStreamEjemplo {
-   //<editor-fold defautlstate="collapsed" desc="Componentes">
+public class FrmStreamEjemplo extends JFrame {
+    //<editor-fold defautlstate="collapsed" desc="Componentes">
     public JPanel pnlRoot;
     private JTextField txtNombre;
     private JTextField txtApellidoPaterno;
     private JTextField txtApellidoMaterno;
     private JFormattedTextField ftxtFechaNacimiento;
     private JTextArea atxtDireccion;
-    private JTextField textField1;
-    private JTextField textField2;
+    private JTextField txtGrado;
+    private JTextField txtSeccion;
     private JComboBox cboGenero;
     private JButton btnAgregar;
     private JButton btnEditar;
@@ -39,11 +37,13 @@ public class FrmStreamEjemplo {
         initComponents();
     }
 
-    public void initComponents(){
+    public void initComponents() {
+
+        tblEstudiantes.setFillsViewportHeight(true);
         DefaultTableModel modelo = new DefaultTableModel();
         modelo.addColumn("Codigo");
         modelo.addColumn("Nombre");
-        if(estudiantesModel == null){
+        if (estudiantesModel == null) {
             estudiantesModel = new ArrayList<>();
         }
         estudiantesModel.add(new Estudiante(String.valueOf(new Random().nextInt()), "Sussan Gissele", "Batres", "Alvarenga", LocalDate.of(1999, 5, 25), "Paraíso", "6to", 'C', 'F'));
@@ -59,20 +59,23 @@ public class FrmStreamEjemplo {
             });
         });
         tblEstudiantes.setModel(modelo);
-        //Formato de ftxt
+        //Agregando eventos a botones
+        btnAgregar.addActionListener(evt -> {
+            Estudiante estudiante = new Estudiante(String.valueOf(new Random().nextInt()));
+            estudiante.setNombre(txtNombre.getText());
+            estudiante.setApellidoPaterno(txtApellidoPaterno.getText());
+            estudiante.setApellidoMaterno(txtApellidoMaterno.getText());
+            DateTimeFormatter dft = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            estudiante.setFechaNacimiento(LocalDate.parse(ftxtFechaNacimiento.getText(), dft));
+            estudiante.setDireccion(atxtDireccion.getText());
+            estudiante.setGrado(txtGrado.getText());
+            estudiante.setSeccion(txtSeccion.getText().toUpperCase().charAt(0));
+            estudiante.setGenero(cboGenero.getSelectedItem().toString().charAt(0));
+        });
         try {
             MaskFormatter mascara = new MaskFormatter("##/##/####");
-            ftxtFechaNacimiento = new JFormattedTextField(mascara);
-            //Agregando eventos a botones
-            btnAgregar.addActionListener(evt -> {
-                Estudiante estudiante = new Estudiante(String.valueOf(new Random().nextInt()));
-                estudiante.setNombre(txtNombre.getText());
-                estudiante.setApellidoPaterno(txtApellidoPaterno.getText());
-                estudiante.setApellidoMaterno(txtApellidoMaterno.getText());
-                estudiante.setFechaNacimiento(LocalDate.parse(ftxtFechaNacimiento.getText()));
-                System.out.println(estudiante.getFechaNacimiento());
-
-            });
+            mascara.setPlaceholderCharacter('_');
+            ftxtFechaNacimiento.setFormatterFactory(new DefaultFormatterFactory(mascara));
         } catch (ParseException e) {
             e.printStackTrace();
         }
