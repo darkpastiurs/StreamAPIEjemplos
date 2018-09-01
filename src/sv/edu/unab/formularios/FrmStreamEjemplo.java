@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 public class FrmStreamEjemplo extends JFrame {
     //<editor-fold defautlstate="collapsed" desc="Componentes">
@@ -38,27 +39,13 @@ public class FrmStreamEjemplo extends JFrame {
     }
 
     public void initComponents() {
-
         tblEstudiantes.setFillsViewportHeight(true);
-        DefaultTableModel modelo = new DefaultTableModel();
-        modelo.addColumn("Codigo");
-        modelo.addColumn("Nombre");
         if (estudiantesModel == null) {
             estudiantesModel = new ArrayList<>();
         }
         estudiantesModel.add(new Estudiante(String.valueOf(new Random().nextInt()), "Sussan Gissele", "Batres", "Alvarenga", LocalDate.of(1999, 5, 25), "Paraíso", "6to", 'C', 'F'));
         estudiantesModel.add(new Estudiante(String.valueOf(new Random().nextInt()), "Marcos Alexanander", "Gómez", "Pérez", LocalDate.of(1997, 4, 26), "Sierpe", "8vo", 'C', 'M'));
-        estudiantesModel.stream().forEach(estudiante -> {
-            StringJoiner nombreCompleto = new StringJoiner(" ");
-            nombreCompleto.add(estudiante.getApellidoPaterno());
-            nombreCompleto.add(estudiante.getApellidoMaterno());
-            nombreCompleto.add(estudiante.getNombre());
-            modelo.addRow(new Object[]{
-                    estudiante.getCodigo(),
-                    nombreCompleto
-            });
-        });
-        tblEstudiantes.setModel(modelo);
+        actualizarTabla(estudiantesModel);
         //Agregando eventos a botones
         btnAgregar.addActionListener(evt -> {
             Estudiante estudiante = new Estudiante(String.valueOf(new Random().nextInt()));
@@ -71,7 +58,41 @@ public class FrmStreamEjemplo extends JFrame {
             estudiante.setGrado(txtGrado.getText());
             estudiante.setSeccion(txtSeccion.getText().toUpperCase().charAt(0));
             estudiante.setGenero(cboGenero.getSelectedItem().toString().charAt(0));
+            estudiantesModel.add(estudiante);
+            limpiarComponentes();
+            actualizarTabla(estudiantesModel);
         });
+
+        btnConsultar.addActionListener(evt -> {
+//            List<String> nombres = estudiantesModel.stream().map(e -> {
+//                StringJoiner nombreCompleto = new StringJoiner(" ");
+//                nombreCompleto.add(e.getNombre());
+//                nombreCompleto.add(e.getApellidoPaterno());
+//                nombreCompleto.add(e.getApellidoMaterno());
+//                return nombreCompleto.toString();
+//            }).collect(Collectors.toList());
+//            JOptionPane.showMessageDialog(pnlRoot, nombres.toString());
+//            String nombres1 = estudiantesModel.stream().map(e -> {
+//                StringJoiner nombreCompleto = new StringJoiner(" ");
+//                nombreCompleto.add(e.getNombre());
+//                nombreCompleto.add(e.getApellidoPaterno());
+//                nombreCompleto.add(e.getApellidoMaterno());
+//                return nombreCompleto.toString();
+//            }).collect(Collectors.joining("; "));
+//            JOptionPane.showMessageDialog(pnlRoot, nombres1);
+            List<Estudiante> estudiantesFiltrados = estudiantesModel.stream().filter(e -> {
+                boolean encontrado = e.getNombre().toUpperCase().contains(txtNombre.getText().toUpperCase());
+                if(!txtApellidoPaterno.getText().isEmpty()){
+                    encontrado = encontrado && e.getApellidoPaterno().toUpperCase().contains(txtApellidoPaterno.getText().toUpperCase());
+                }
+                if(!txtGrado.getText().isEmpty()){
+                    encontrado = encontrado && e.getGrado().contains(txtGrado.getText());
+                }
+                return encontrado;
+            }).collect(Collectors.toList());
+            actualizarTabla(estudiantesFiltrados);
+        });
+
         try {
             MaskFormatter mascara = new MaskFormatter("##/##/####");
             mascara.setPlaceholderCharacter('_');
@@ -79,5 +100,46 @@ public class FrmStreamEjemplo extends JFrame {
         } catch (ParseException e) {
             e.printStackTrace();
         }
+    }
+
+    private void actualizarTabla(List<Estudiante> listado){
+        reiniciarJTable(tblEstudiantes);
+        DefaultTableModel modelo  = new DefaultTableModel();
+        modelo.addColumn("Codigo");
+        modelo.addColumn("Nombre");
+        modelo.addColumn("Curso");
+        listado.stream().forEach(estudiante -> {
+            StringJoiner nombreCompleto = new StringJoiner(" ");
+            nombreCompleto.add(estudiante.getApellidoPaterno());
+            nombreCompleto.add(estudiante.getApellidoMaterno());
+            nombreCompleto.add(estudiante.getNombre());
+            StringJoiner curso = new StringJoiner(" ");
+            curso.add(estudiante.getGrado());
+            curso.add(estudiante.getSeccion().toString());
+            modelo.addRow(new Object[]{
+                    estudiante,
+                    nombreCompleto,
+                    curso
+            });
+        });
+        tblEstudiantes.setModel(modelo);
+    }
+
+    private void reiniciarJTable(JTable jTable){
+        DefaultTableModel modelo = (DefaultTableModel) jTable.getModel();
+        while (modelo.getRowCount() > 0){
+            modelo.removeRow(0);
+        }
+    }
+
+    private void limpiarComponentes(){
+        txtNombre.setText(null);
+        txtApellidoPaterno.setText(null);
+        txtApellidoMaterno.setText(null);
+        ftxtFechaNacimiento.setValue(null);
+        atxtDireccion.setText(null);
+        txtGrado.setText(null);
+        txtSeccion.setText(null);
+        cboGenero.setSelectedIndex(0);
     }
 }

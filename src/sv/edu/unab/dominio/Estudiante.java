@@ -128,8 +128,6 @@ public class Estudiante {
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", Estudiante.class.getSimpleName() + "[", "]")
-                .add("codigo='" + codigo + "'")
-                .toString();
+        return codigo;
     }
 }
