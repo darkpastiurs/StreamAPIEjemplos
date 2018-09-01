@@ -6,16 +6,15 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.MaskFormatter;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.StringJoiner;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public class FrmStreamEjemplo extends JFrame {
+public class FrmStreamEjemplo {
     //<editor-fold defautlstate="collapsed" desc="Componentes">
     public JPanel pnlRoot;
     private JTextField txtNombre;
@@ -31,6 +30,9 @@ public class FrmStreamEjemplo extends JFrame {
     private JButton btnEliminar;
     private JButton btnConsultar;
     private JTable tblEstudiantes;
+    private JLabel lblEstudianteMenor;
+    private JLabel lblEstudianteMayor;
+    private JLabel lblPromedioEdad;
     //</editor-fold>
     private List<Estudiante> estudiantesModel;
 
@@ -45,7 +47,7 @@ public class FrmStreamEjemplo extends JFrame {
         }
         estudiantesModel.add(new Estudiante(String.valueOf(new Random().nextInt()), "Sussan Gissele", "Batres", "Alvarenga", LocalDate.of(1999, 5, 25), "Paraíso", "6to", 'C', 'F'));
         estudiantesModel.add(new Estudiante(String.valueOf(new Random().nextInt()), "Marcos Alexanander", "Gómez", "Pérez", LocalDate.of(1997, 4, 26), "Sierpe", "8vo", 'C', 'M'));
-        actualizarTabla(estudiantesModel);
+        actualizarDatos(estudiantesModel);
         //Agregando eventos a botones
         btnAgregar.addActionListener(evt -> {
             Estudiante estudiante = new Estudiante(String.valueOf(new Random().nextInt()));
@@ -60,26 +62,10 @@ public class FrmStreamEjemplo extends JFrame {
             estudiante.setGenero(cboGenero.getSelectedItem().toString().charAt(0));
             estudiantesModel.add(estudiante);
             limpiarComponentes();
-            actualizarTabla(estudiantesModel);
+            actualizarDatos(estudiantesModel);
         });
 
         btnConsultar.addActionListener(evt -> {
-//            List<String> nombres = estudiantesModel.stream().map(e -> {
-//                StringJoiner nombreCompleto = new StringJoiner(" ");
-//                nombreCompleto.add(e.getNombre());
-//                nombreCompleto.add(e.getApellidoPaterno());
-//                nombreCompleto.add(e.getApellidoMaterno());
-//                return nombreCompleto.toString();
-//            }).collect(Collectors.toList());
-//            JOptionPane.showMessageDialog(pnlRoot, nombres.toString());
-//            String nombres1 = estudiantesModel.stream().map(e -> {
-//                StringJoiner nombreCompleto = new StringJoiner(" ");
-//                nombreCompleto.add(e.getNombre());
-//                nombreCompleto.add(e.getApellidoPaterno());
-//                nombreCompleto.add(e.getApellidoMaterno());
-//                return nombreCompleto.toString();
-//            }).collect(Collectors.joining("; "));
-//            JOptionPane.showMessageDialog(pnlRoot, nombres1);
             List<Estudiante> estudiantesFiltrados = estudiantesModel.stream().filter(e -> {
                 boolean encontrado = e.getNombre().toUpperCase().contains(txtNombre.getText().toUpperCase());
                 if(!txtApellidoPaterno.getText().isEmpty()){
@@ -90,9 +76,8 @@ public class FrmStreamEjemplo extends JFrame {
                 }
                 return encontrado;
             }).collect(Collectors.toList());
-            actualizarTabla(estudiantesFiltrados);
+            actualizarDatos(estudiantesFiltrados);
         });
-
         try {
             MaskFormatter mascara = new MaskFormatter("##/##/####");
             mascara.setPlaceholderCharacter('_');
@@ -102,11 +87,32 @@ public class FrmStreamEjemplo extends JFrame {
         }
     }
 
-    private void actualizarTabla(List<Estudiante> listado){
+    private void actualizarDatos(List<Estudiante> listado){
         reiniciarJTable(tblEstudiantes);
+        Estudiante edadMenor = listado.stream().min((e1, e2) -> {
+            Long edad1 = e1.getFechaNacimiento().until(LocalDate.now(), ChronoUnit.YEARS);
+            Long edad2 = e2.getFechaNacimiento().until(LocalDate.now(), ChronoUnit.YEARS);
+            return edad1.compareTo(edad2);
+        }).get();
+        Estudiante edadMayor = listado.stream().max((e1, e2) -> {
+            Long edad1 = e1.getFechaNacimiento().until(LocalDate.now(), ChronoUnit.YEARS);
+            Long edad2 = e2.getFechaNacimiento().until(LocalDate.now(), ChronoUnit.YEARS);
+            return edad1.compareTo(edad2);
+        }).get();
+        lblEstudianteMenor.setText(edadMenor.getNombre());
+        lblEstudianteMayor.setText(edadMayor.getNombre());
+        BigDecimal edadPromedio = listado.stream()
+                .map(e -> {
+                    Long edad = e.getFechaNacimiento().until(LocalDate.now(), ChronoUnit.YEARS);
+                    return new BigDecimal(edad);
+                })
+                .reduce((e1, e2) -> (e1.add(e2)).divide(new BigDecimal(2))).get();
+        edadPromedio.setScale(2,BigDecimal.ROUND_HALF_UP);
+        lblPromedioEdad.setText(edadPromedio.toString());
         DefaultTableModel modelo  = new DefaultTableModel();
         modelo.addColumn("Codigo");
         modelo.addColumn("Nombre");
+        modelo.addColumn("Edad");
         modelo.addColumn("Curso");
         listado.stream().forEach(estudiante -> {
             StringJoiner nombreCompleto = new StringJoiner(" ");
@@ -119,6 +125,7 @@ public class FrmStreamEjemplo extends JFrame {
             modelo.addRow(new Object[]{
                     estudiante,
                     nombreCompleto,
+                    estudiante.getFechaNacimiento().until(LocalDate.now(), ChronoUnit.YEARS),
                     curso
             });
         });
